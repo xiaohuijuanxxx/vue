@@ -138,6 +138,11 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 从上面的代码可以看到，mountComponent 核心就是先实例化一个渲染Watcher，
+ * 在它的回调函数中会调用 updateComponent 方法，在此方法中调用 vm._render 方法先生成虚拟 Node，
+ * 最终调用 vm._update 更新 DOM。
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
@@ -194,6 +199,11 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  
+  /**
+   * Watcher 在这里起到两个作用，一个是初始化的时候会执行回调函数，
+   * 另一个是当 vm 实例中的监测的数据发生变化的时候执行回调函数，这块儿我们会在之后的章节中介绍。
+   */
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -205,6 +215,10 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  /**
+   * 函数最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，
+   * 同时执行 mounted 钩子函数。 这里注意 vm.$vnode 表示 Vue 实例的父虚拟 Node，所以它为 Null 则表示当前是根 Vue 的实例
+   */
   if (vm.$vnode == null) {
     vm._isMounted = true
     callHook(vm, 'mounted')

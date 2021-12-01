@@ -25,6 +25,8 @@ const ALWAYS_NORMALIZE = 2
 
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
+
+/* 是对_createElement的封装 */
 export function createElement (
   context: Component,
   tag: any,
@@ -44,11 +46,13 @@ export function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+//createElement 函数的流程略微有点多，主要分析 2 个重点的流程 —— children 的规范化以及 VNode 的创建。
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
   data?: VNodeData,
   children?: any,
+  //normalizationType 表示子节点规范的类型，类型不同规范的方法也就不一样，它主要是参考 render 函数是编译生成的还是用户手写的
   normalizationType?: number
 ): VNode | Array<VNode> {
   if (isDef(data) && isDef((data: any).__ob__)) {
@@ -80,6 +84,9 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+  /* 由于 Virtual DOM 实际上是一个树状结构，每一个 VNode 可能会有若干个子节点，
+    这些子节点应该也是 VNode 的类型。
+  _createElement 接收的第 4 个参数 children 是任意类型的，因此我们需要把它们规范成 VNode 类型 */
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
   ) {
@@ -87,6 +94,8 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+
+  //根据normalizationType不同，调用不同的方法将children转为vnode类型
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {

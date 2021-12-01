@@ -28,6 +28,12 @@ export function initRender (vm: Component) {
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+
+  /**
+   * -c是被模板编译成的render函数使用的
+   * $createElement 是用户手写render的时候使用
+   * 两个函数参数相同，内部都是created方法
+   */
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
@@ -66,6 +72,7 @@ export function renderMixin (Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
+
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options
@@ -88,6 +95,16 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
+
+      /**
+       * 主要逻辑
+        $createElement 是在initRender的时候写在构造函数的方法
+        Virtual DOM 就是用一个原生的 JS 对象去描述一个 DOM 节点
+        VNode 只是用来映射到真实 DOM 的渲染，不需要包含操作 DOM 的方法
+
+        VNode 的 create、diff、patch 等过程。
+        那么在 Vue.js 中，VNode 的 create 是通过之前提到的 createElement 方法创建的
+       */
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)

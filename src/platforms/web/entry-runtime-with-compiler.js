@@ -31,7 +31,12 @@ Vue.prototype.$mount = function (
 
   const options = this.$options
   // resolve template/el and convert to render function
+  // 如果没有定义 render 方法，则会把 el 或者 template 字符串转换成 render 方法
   if (!options.render) {
+    /**
+     * 当一个实例同时拥有 el 和 template, Vue 在编译的时候
+       Vue 会把 template 的实例全部替换到 el 挂载的内容上, 包括挂载的标签也会被替换掉
+     */
     let template = options.template
     if (template) {
       if (typeof template === 'string') {

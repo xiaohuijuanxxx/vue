@@ -49,11 +49,15 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
+    
+    initLifecycle(vm) // 通过parent属性，建立子组件与父组件的父子关系
+    initEvents(vm) //处理父组件传到子组件的自定义事件 @handle = parentHandle 
+    initRender(vm) //vm下创建 _c $createElement两个相同的方法，用来创建虚拟dom
+
+    //实例初始化之后，进行数据侦听和事件/侦听器的配置之间同步调用
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+
     initState(vm)
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')
