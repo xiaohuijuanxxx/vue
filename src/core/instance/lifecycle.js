@@ -56,19 +56,29 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  /**
+   * update调用时机有两个
+   * 一个是首次渲染，一个是数据更新
+   * update的作用是把vnode渲染成真实的dom
+   */
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
+    //页面的挂载点，真实的元素
     const prevEl = vm.$el
+    //老vnode
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
+    //传入的新vnode
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+
+    //如果老vnode不存在，那么表示首次渲染，即初始化页面
     if (!prevVnode) {
-      // initial render
+      // initial render 初始渲染的时候
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
-      // updates
+      // update 数据更新的时候
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -216,8 +226,7 @@ export function mountComponent (
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
   /**
-   * 函数最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，
-   * 同时执行 mounted 钩子函数。 这里注意 vm.$vnode 表示 Vue 实例的父虚拟 Node，所以它为 Null 则表示当前是根 Vue 的实例
+   * 函数最后判断为根节点的时候设置 vm._isMounted 为 true， 表示这个实例已经挂载了，同时执行 mounted 钩子函数。 这里注意 vm.$vnode 表示 Vue 实例的父虚拟 Node，所以它为 Null 则表示当前是根 Vue 的实例
    */
   if (vm.$vnode == null) {
     vm._isMounted = true

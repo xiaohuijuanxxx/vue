@@ -84,6 +84,8 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+
+
   /* 由于 Virtual DOM 实际上是一个树状结构，每一个 VNode 可能会有若干个子节点，
     这些子节点应该也是 VNode 的类型。
   _createElement 接收的第 4 个参数 children 是任意类型的，因此我们需要把它们规范成 VNode 类型 */
@@ -96,15 +98,23 @@ export function _createElement (
   }
 
   //根据normalizationType不同，调用不同的方法将children转为vnode类型
+  // normalize 标准化，规范化
+  //用户手写render的时候
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
+    //render函数是编译器生成的时候调用simpleNormalizeChildren
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
   }
+
+  //规范化children之后，创建vnode
   let vnode, ns
+  //String类型
   if (typeof tag === 'string') {
     let Ctor
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+
+    //如果tag是内置节点，则直接new Vnode创建一个vnode
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn) && data.tag !== 'component') {
@@ -117,10 +127,16 @@ export function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
-    } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
+    } 
+
+    //如果是已注册的组件名，通过createComponent创建
+    else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
-    } else {
+    } 
+    
+    //否则创建一个未知的标签的Vnode
+    else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
@@ -129,10 +145,12 @@ export function _createElement (
         undefined, undefined, context
       )
     }
-  } else {
+  } else {//如果是component类型 组件类型
     // direct component options / constructor
     vnode = createComponent(tag, data, context, children)
   }
+
+
   if (Array.isArray(vnode)) {
     return vnode
   } else if (isDef(vnode)) {
