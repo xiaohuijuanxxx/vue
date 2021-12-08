@@ -444,15 +444,22 @@ export function createPatchFunction (backend) {
     *             找到相同节点，则执行 patchVnode，然后将老节点移动到正确的位置
     *   如果老节点先于新节点遍历结束，则剩余的新节点执行新增节点操作
     *   如果新节点先于老节点遍历结束，则剩余的老节点执行删除操作，移除这些老节点
+    * 
+    * 
  */
   function updateChildren (parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
+    //新老节点开始的索引
     let oldStartIdx = 0
     let newStartIdx = 0
+    //新老节点结束的索引
     let oldEndIdx = oldCh.length - 1
-    let oldStartVnode = oldCh[0]
-    let oldEndVnode = oldCh[oldEndIdx]
     let newEndIdx = newCh.length - 1
+
+    //新老节点开始的vnode
+    let oldStartVnode = oldCh[0]
     let newStartVnode = newCh[0]
+    //新老节点结束vnode
+    let oldEndVnode = oldCh[oldEndIdx]
     let newEndVnode = newCh[newEndIdx]
     let oldKeyToIdx, idxInOld, vnodeToMove, refElm
 
@@ -465,54 +472,97 @@ export function createPatchFunction (backend) {
       checkDuplicateKeys(newCh)
     }
 
+    //如果新、旧 左指针都小于等于右指针  只要有一个遍历完则跳出
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      //旧开头vnode为空
       if (isUndef(oldStartVnode)) {
+        //代表节点已经移动了 指针后移
         oldStartVnode = oldCh[++oldStartIdx] // Vnode has been moved left
-      } else if (isUndef(oldEndVnode)) {
+      } 
+      //如果旧结尾为空
+      else if (isUndef(oldEndVnode)) {
+        //指针前移
         oldEndVnode = oldCh[--oldEndIdx]
-      } else if (sameVnode(oldStartVnode, newStartVnode)) {
+      } 
+      //如果新开头和旧开头相同
+      else if (sameVnode(oldStartVnode, newStartVnode)) {
+        //根据变化给真实dom打补丁（遍历属性 更新）
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+        //两个头指针后移
         oldStartVnode = oldCh[++oldStartIdx]
         newStartVnode = newCh[++newStartIdx]
-      } else if (sameVnode(oldEndVnode, newEndVnode)) {
+      }
+      //如果老结尾和新结尾相同
+      else if (sameVnode(oldEndVnode, newEndVnode)) {
+        //根据变化给真实dom打补丁（遍历属性 更新）
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        //两个尾指针前移
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
-      } else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
+      } 
+      //老开头和新结尾一样
+      else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
+        //继续对比两个vnode的chirdren   先打补丁后移动
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
+        //操作真实dom  将旧开始移到旧结束之后 
         canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm))
+        //老开头++ 新结尾--
         oldStartVnode = oldCh[++oldStartIdx]
         newEndVnode = newCh[--newEndIdx]
-      } else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
+      } 
+      //老结尾==新开头
+      else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+        //老结尾对应的dom 移到 老开头之前
         canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm)
         oldEndVnode = oldCh[--oldEndIdx]
         newStartVnode = newCh[++newStartIdx]
       } else {
+
+        //前四种策略没有命中
+        //如果旧的节点没有key  得到指定范围（oldStartIdx —— oldEndIdx）内节点的 key 和 索引之间的关系映射 => { key1: idx1, ... }
         if (isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx)
+        //idxInOld 代表在旧列表中是否能找到 key 与 新开头的key相同的索引
         idxInOld = isDef(newStartVnode.key)
           ? oldKeyToIdx[newStartVnode.key]
+          //新开头的key为空，那么就根据findIdxInOld找索引 找到新节点（vnode）在老节点（oldCh）中的位置索引 
           : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+
+        //如果没找到
         if (isUndef(idxInOld)) { // New element
+          //创建新dom
           createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
         } else {
+          //能在旧节点中找到与新节点key相同的key 
           vnodeToMove = oldCh[idxInOld]
+          //比较两个节点是否为同一节点，如果是
           if (sameVnode(vnodeToMove, newStartVnode)) {
+            //比较两个节点的chirdren 
             patchVnode(vnodeToMove, newStartVnode, insertedVnodeQueue, newCh, newStartIdx)
+            //由我们将旧列表中的节点改为undefined，这是至关重要的一步，因为我们已经做了节点的移动了所以我们不需要进行再次的对比了
             oldCh[idxInOld] = undefined
+            //移动 ==== 将dom元素移动到 旧开始之前
             canMove && nodeOps.insertBefore(parentElm, vnodeToMove.elm, oldStartVnode.elm)
           } else {
             // same key but different element. treat as new element
+            //如果新开头在旧列表中没有找到相同的key 那么根据新开头创建dom 
             createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm, false, newCh, newStartIdx)
           }
         }
+        //新开头指针后移，新开头节点后移
         newStartVnode = newCh[++newStartIdx]
       }
     }
+    //如果老列表先遍历完了，那么代表新列表更长，有新增
     if (oldStartIdx > oldEndIdx) {
+      //如果要加的节点不在新列表最后，那么找到这个索引对应的真实dom 或null，
       refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm
+      //创建真实dom 将新开头->新结尾指针之间的元素创建dom 左闭右闭  并插入到refelm之前
       addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue)
-    } else if (newStartIdx > newEndIdx) {
+    } 
+    //反之，代表需要删除旧节点
+    else if (newStartIdx > newEndIdx) {
+      //移除旧开头->旧结尾指针之间的dom节点 左闭右闭
       removeVnodes(oldCh, oldStartIdx, oldEndIdx)
     }
   }
@@ -576,7 +626,7 @@ export function createPatchFunction (backend) {
     // if the new node is not cloned it means the render functions have been
     // reset by the hot-reload-api and we need to do a proper re-render.
     
-    // 跳过静态节点的更新
+    // 跳过静态节点的更新 <p>我是不会变化的文字</p> 静态节点不需要更新
     if (isTrue(vnode.isStatic) &&
       isTrue(oldVnode.isStatic) &&
       vnode.key === oldVnode.key &&

@@ -73,6 +73,13 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
 
+    /**
+     *  用JS对象模拟DOM（虚拟DOM）
+        把此虚拟DOM转成真实DOM并插入页面中（render）
+        如果有事件发生修改了虚拟DOM，比较两棵虚拟DOM树的差异(先序遍历深度优先)，得到差异对象（diff）
+        把差异对象应用到真正的DOM树上（patch）
+     */
+
     //如果老vnode不存在，那么表示首次渲染，即初始化页面
     if (!prevVnode) {
       // initial render 初始渲染的时候
